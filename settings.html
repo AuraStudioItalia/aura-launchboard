@@ -1276,9 +1276,8 @@
                 throw new Error(data.error || `Errore ${res.status}`);
             }
 
-            // Il server restituisce { ok: true, url: "/pfp/uid/profileImage.webp" }
-            // Costruiamo l'URL completo
-            uploadedImageURL = PFP_BASE + data.url;
+            // Accetta sia un percorso relativo sia un URL assoluto restituito dal server.
+            uploadedImageURL = new URL(data.url, PFP_BASE).href;
 
             // Aggiorna anteprima e campo URL
             document.getElementById('profile-preview').src     = uploadedImageURL;

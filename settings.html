@@ -1058,6 +1058,14 @@
 
     const PFP_BASE = 'https://pfp-api.aurastudioitalia.it';
 
+    function resolveProfileImageURL(value) {
+        let imageURL = String(value || '').trim();
+        const concatenatedURL = imageURL.match(/^https?:\/\/[^/]+(https?\/\/.*)$/i);
+        if (concatenatedURL) imageURL = concatenatedURL[1];
+        imageURL = imageURL.replace(/^(https?)\/\//i, '$1://');
+        return new URL(imageURL, `${PFP_BASE}/`).href;
+    }
+
     // ── Toast ──
     let toastTimer;
     function showToast(msg, type = 'success') {
@@ -1120,7 +1128,10 @@
         document.getElementById('overview-uid').textContent          = user.uid;
 
         // Immagine profilo — può essere URL VPS o URL esterno
-        const imgURL = data.profileImage || 'images/default.png';
+        const savedImageURL = data.profileImage || 'images/default.png';
+        const imgURL = /^https?:\/\//i.test(savedImageURL) || savedImageURL.startsWith('/pfp/')
+            ? resolveProfileImageURL(savedImageURL)
+            : savedImageURL;
         document.getElementById('overview-img').src    = imgURL;
         document.getElementById('profile-preview').src = imgURL;
         document.getElementById('edit-profileImage').value = imgURL;
@@ -1276,8 +1287,7 @@
                 throw new Error(data.error || `Errore ${res.status}`);
             }
 
-            // Accetta sia un percorso relativo sia un URL assoluto restituito dal server.
-            uploadedImageURL = new URL(data.url, PFP_BASE).href;
+            uploadedImageURL = resolveProfileImageURL(data.url);
 
             // Aggiorna anteprima e campo URL
             document.getElementById('profile-preview').src     = uploadedImageURL;
@@ -1340,7 +1350,6 @@
             return;
         }
 
-        
         const btn = document.getElementById('btn-verify-password');
         btn.disabled = true;
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifica...';
